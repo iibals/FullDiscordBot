@@ -1,0 +1,258 @@
+// ./scripts/onboarding-private-rooms.js
+// discord.js v14 — إنشاء روم خاص لكل عضو جديد + اختيار الجنس والتخصص (عربي/إنجليزي) عبر Select Menus ثم تعيين الرتب.
+// إذا اختار "None of above | غير موجود ضمن القائمة" يتم منشن الأدمن ويتوقف الحذف.
+const {
+  PermissionFlagsBits,
+  ChannelType,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  PermissionsBitField,
+} = require('discord.js');
+
+module.exports = (client) => {
+  const GUILD_ID = '1399596680822915124';
+  const ADMIN_ID = '237171492452958218';
+  const MEMBER_ROLE_ID = '1399668268083449926';
+
+
+  const GENDER_ROLES = {
+    male:   '1422605527862743040',
+    female: '1422605527862743040',
+  };
+
+  const SPEC_ROLES = {
+    eng:             '1422634115588690098',
+    medicine:        '1422634118109335703',
+    managemtn:       '1422634120609136711',
+    'compote-since': '1422634122760814692',
+    busniss:         '1422634125008830598',
+    accounting:      '1422634127567356024',
+    markting:        '1422634129777885316',
+    law:             '1422634132780875878',
+    architecture:    '1422634135494594590',
+    design:          '1422634138187464766',
+    nursing:         '1422634140255391915',
+    pharamcy:        '1422634142281236510',
+    physics:         '1422634144160288889',
+    chemitry:        '1422634146957758617',
+    math:            '1422634148895526934',
+    languages:       '1422634151374356490',
+  };
+
+  const SPEC_META = {
+    eng:             { en: 'Engineering',        ar: 'الهندسة' },
+    medicine:        { en: 'Medicine',           ar: 'الطب' },
+    managemtn:       { en: 'Management',         ar: 'الإدارة' },
+    'compote-since': { en: 'Computer Science',   ar: 'علوم الحاسب' },
+    busniss:         { en: 'Business',           ar: 'الأعمال' },
+    accounting:      { en: 'Accounting',         ar: 'المحاسبة' },
+    markting:        { en: 'Marketing',          ar: 'التسويق' },
+    law:             { en: 'Law',                ar: 'القانون' },
+    architecture:    { en: 'Architecture',       ar: 'العمارة' },
+    design:          { en: 'Design',             ar: 'التصميم' },
+    nursing:         { en: 'Nursing',            ar: 'التمريض' },
+    pharamcy:        { en: 'Pharmacy',           ar: 'الصيدلة' },
+    physics:         { en: 'Physics',            ar: 'الفيزياء' },
+    chemitry:        { en: 'Chemistry',          ar: 'الكيمياء' },
+    math:            { en: 'Mathematics',        ar: 'الرياضيات' },
+    languages:       { en: 'Languages',          ar: 'اللغات' },
+  };
+
+  const genderOptions = [
+    { label: 'Male | ذكر', value: 'male', description: 'اختر: ذكر' },
+    { label: 'Female | أنثى', value: 'female', description: 'اختر: أنثى' },
+  ];
+
+  const specOptions = [
+    ...Object.keys(SPEC_ROLES).map((key) => {
+      const meta = SPEC_META[key] || { en: key, ar: key };
+      return {
+        label: `${meta.en} | ${meta.ar}`,
+        value: key,
+        description: `تخصص: ${meta.ar}`,
+      };
+    }),
+    {
+      label: 'None of above | غير موجود ضمن القائمة',
+      value: 'none',
+      description: 'تواصل لإضافة تخصصك',
+    },
+  ];
+
+  // منع التكرار
+  if (client._onboardingHandler) return;
+  client._onboardingHandler = true;
+
+  client.on('guildMemberAdd', async (member) => {
+    
+    try {
+      if (member.guild.id !== GUILD_ID) return;
+
+      const me = member.guild.members.me;
+      if (
+        !me.permissions.has([
+          PermissionsBitField.Flags.ManageChannels,
+          PermissionsBitField.Flags.ManageRoles,
+          PermissionsBitField.Flags.SendMessages,
+          PermissionsBitField.Flags.ViewChannel,
+        ])
+      ) return;
+
+        await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+
+      // الفئة
+      let parent = member.guild.channels.cache.find(
+        (c) => c.type === ChannelType.GuildCategory && c.name === 'Private Onboarding'
+      );
+      if (!parent) {
+        parent = await member.guild.channels.create({
+          name: 'Private Onboarding',
+          type: ChannelType.GuildCategory,
+          permissionOverwrites: [
+            { id: member.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+            {
+              id: client.user.id,
+              allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.ManageChannels,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ReadMessageHistory,
+              ],
+            },
+          ],
+        });
+      }
+
+      // اسم الروم = اسم المستخدم فقط
+      const safe = (s) => s.toLowerCase().replace(/[^a-z0-9-]+/gi, '-').slice(0, 32) || 'member';
+      const ch = await member.guild.channels.create({
+        name: safe(member.user.username),
+        type: ChannelType.GuildText,
+        parent: parent.id,
+        permissionOverwrites: [
+          { id: member.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+          {
+            id: member.id,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.EmbedLinks,
+              PermissionFlagsBits.AttachFiles,
+            ],
+          },
+          {
+            id: client.user.id,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.ManageChannels,
+              PermissionFlagsBits.EmbedLinks,
+            ],
+          },
+        ],
+      });
+
+      // سؤال الجنس
+      const genderRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId(`onb:gender:${member.id}`)
+          .setPlaceholder('انت رجل ولا انثى ؟')
+          .setMinValues(1)
+          .setMaxValues(1)
+          .addOptions(genderOptions)
+      );
+
+      await ch.send({
+        content: `${member} انت رجل ولا انثى ؟`,
+        components: [genderRow],
+      });
+    } catch {}
+  });
+
+  client.on('interactionCreate', async (interaction) => {
+    try {
+      if (!interaction.isStringSelectMenu()) return;
+      if (interaction.guildId !== GUILD_ID) return;
+
+      const [ns, kind, targetId] = (interaction.customId || '').split(':');
+      if (ns !== 'onb') return;
+
+      if (interaction.user.id !== targetId) {
+        return interaction.reply({ content: 'هذا الاختيار ليس لك.', ephemeral: true }).catch(() => {});
+      }
+
+      const member = await interaction.guild.members.fetch(targetId).catch(() => null);
+      if (!member) return;
+
+      const clearComponents = async () => {
+        try { await interaction.message.edit({ components: [] }); } catch {}
+      };
+
+      if (kind === 'gender') {
+        const choice = interaction.values?.[0];
+        const roleId = GENDER_ROLES[choice];
+        await clearComponents();
+
+        if (roleId) {
+          const otherId = choice === 'male' ? GENDER_ROLES.female : GENDER_ROLES.male;
+          if (otherId && member.roles.cache.has(otherId)) {
+            await member.roles.remove(otherId).catch(() => {});
+          }
+          await member.roles.add(roleId).catch(() => {});
+        }
+
+        await interaction.reply({ content: `تم تعيين الجنس: **${choice}**.` }).catch(() => {});
+
+        const specRow = new ActionRowBuilder().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId(`onb:spec:${member.id}`)
+            .setPlaceholder('وش التخصص حقك ؟ (Arabic/English)')
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addOptions(specOptions)
+        );
+
+        await interaction.channel.send({
+          content: `${member} اختر تخصصك من القائمة:`,
+          components: [specRow],
+        });
+      }
+
+      if (kind === 'spec') {
+        const choice = interaction.values?.[0];
+        await clearComponents();
+
+        if (choice === 'none') {
+          return interaction.reply({
+            content: `ما لقينا تخصصك في القائمة. ${interaction.user} تواصل مع <@${ADMIN_ID}> لإضافته.`,
+          }).catch(() => {});
+        }
+
+        const roleId = SPEC_ROLES[choice];
+        if (roleId) {
+          const allSpecIds = Object.values(SPEC_ROLES);
+          const hasAny = member.roles.cache.filter((r) => allSpecIds.includes(r.id));
+          if (hasAny.size) {
+            await member.roles.remove(hasAny).catch(() => {});
+          }
+          await member.roles.add(roleId).catch(() => {});
+        }
+
+        await interaction.reply({ content: `تم تعيين تخصصك: **${choice}**.` }).catch(() => {});
+
+        // رسالة ترحيبية لطيفة ثم حذف القناة بعد 20 ثانية
+        try {
+          await interaction.channel.send({
+            content: `حياك الله ${member} 🤝\nتم تعيين الجنس والتخصص بنجاح. نتمنى لك التوفيق! سيتم حذف الغرفة بعد 20 ثانية.`,
+          });
+        } catch {}
+
+        setTimeout(() => {
+          interaction.channel?.delete('Onboarding completed').catch(() => {});
+        }, 20000);
+      }
+    } catch {}
+  });
+};

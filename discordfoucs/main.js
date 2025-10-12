@@ -1,7 +1,6 @@
-// ./scripts/roles-specializations.js
-// discord.js v14 — يحذف كل الرولات اللي تبدأ بـ m- أو fe- فقط، ثم ينشئ رولات التخصصات بألوان مميّزة.
-// لا يلمس القنوات نهائيًا.
-const { PermissionFlagsBits } = require('discord.js');
+// study-speak-apply.js — discord.js v14
+// يطبّق فعليًا: أي قناة صوت/ستيج اسمها يبدأ بـ "study" يخلّي Speak للرولين male/female = "/".
+// ويطبع أسماء الرومات وكل عملية تعديل + يطبع "خلصنا" بالنهاية.
 
 module.exports = (client) => {
 };

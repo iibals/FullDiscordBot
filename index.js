@@ -33,20 +33,21 @@ require('./ml78/welcome')(client, { blueColor });
 require("./ml78/musictmp")(client);
 require("./ml78/colorsrole")(client);
 require('./ml78/prison')(client, { blueColor });
-require('./ml78/ai.js')(client);
-require('./ml78/logs.js')(client);
+require('./ml78/ai')(client);
+require('./ml78/logs')(client);
 
 // BOYS SERVER 
 require("./boys/colorsrole")(client);
 require('./boys/welcome')(client, { blueColor });
-require('./boys/ai.js')(client);
+require('./boys/ai')(client);
 // FOUCS SERVER 
-require('./discordfoucs/main.js')(client);
-require('./discordfoucs/timeralarm.js')(client, { blueColor });
-require('./discordfoucs/logs.js')(client);
+require('./discordfoucs/main')(client);
+require('./discordfoucs/timeralarm')(client, { blueColor });
+require('./discordfoucs/logs')(client);
+require('./discordfoucs/newmember')(client);
 // General Tasks 
 require("./general/clearmsgs")(client);
-require('./general/userinfo.js')(client, { blueColor });
+require('./general/userinfo')(client, { blueColor });
 
 client.once("ready", () => {
 
