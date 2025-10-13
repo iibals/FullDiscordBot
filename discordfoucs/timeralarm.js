@@ -1,18 +1,12 @@
 // ./scripts/time-alarm.js
-// discord.js v14 — Pomodoro عبر تعديل "صلاحية التحدّث" على رول Member (بدون Server Mute)
-// - أثناء التركيز: إزالة صلاحية Speak من رول Member (ميوت جماعي بالرول)
-// - أثناء البريك: إضافة صلاحية Speak للرول
-// - قناة/قنوات اسمها بالضبط "talk room" تُعطي Speak للرول كـ Override (تبقى مفتوحة دائماً)
-// - تنبيهات Embedded مع منشن رول التنبيه
-// - تنظيف التنبيهات قبل نهاية البريك (عند الدقيقة 29 من كل نصف ساعة)
+// discord.js v14 — Pomodoro notifications only (no role/permission edits)
 
-const { ChannelType, PermissionFlagsBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = (client, { blueColor }) => {
   const GUILD_ID           = '1399596680822915124';
-  const MEMBER_ROLE_ID     = '1399668268083449926';   // رول Member
-  const NOTIFY_CHANNEL_ID  = '1399596681271574659';   // قناة التنبيهات
-  const ALERT_ROLE_ID      = '1399668268083449926';   // رول يُمنشن للتنبيه
+  const NOTIFY_CHANNEL_ID  = '1399596681271574659';   // notify channel
+  const ALERT_ROLE_ID      = '1399668268083449926';   // role to mention
   const RIYADH_TZ          = 'Asia/Riyadh';
 
   // ----- time utils -----
@@ -39,10 +33,10 @@ module.exports = (client, { blueColor }) => {
     };
   }
 
-  // 25 تركيز / 5 بريك (جدار الساعة)
+  // 25 focus / 5 break (on the wall clock)
   const phaseOf = (minute) => (minute % 30) < 25 ? 'focus' : 'break';
 
-  // نقاط الأحداث: 20 (باقي 5) / 25 (بريك يبدأ) / 29 (باقي دقيقة) / 0 (تركيز يبدأ)
+  // event minutes: 20 / 25 / 29 / 0
   function eventAtMinute(minute) {
     const mod = minute % 30;
     if (mod === 20) return 'focus-5-left';
@@ -64,46 +58,10 @@ module.exports = (client, { blueColor }) => {
     return fmtHM.format(tzNow);
   }
 
-  // ----- helpers -----
+  // helpers
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // baseline: نزيل Speak من @everyone (التحكم عبر Member فقط)
-  async function ensureBaselineEveryone(guild) {
-    const everyone = guild.roles.everyone;
-    if (!everyone) return;
-    const hasSpeak = everyone.permissions.has(PermissionFlagsBits.Speak);
-    if (hasSpeak) {
-      const next = new PermissionsBitField(everyone.permissions).remove(PermissionFlagsBits.Speak);
-      await everyone.setPermissions(next, 'Pomodoro baseline: remove Speak from @everyone').catch(()=>{});
-    }
-  }
-
-  // تعديل صلاحية Speak على "رول Member" فقط (بدون Server Mute)
-  async function setMemberSpeak(guild, allow) {
-    const role = guild.roles.cache.get(MEMBER_ROLE_ID) || await guild.roles.fetch(MEMBER_ROLE_ID).catch(() => null);
-    if (!role) return;
-
-    const hasSpeak = role.permissions.has(PermissionFlagsBits.Speak);
-    if (allow && !hasSpeak) {
-      const next = new PermissionsBitField(role.permissions).add(PermissionFlagsBits.Speak);
-      await role.setPermissions(next, 'Pomodoro: break (Speak ON)').catch(()=>{});
-    } else if (!allow && hasSpeak) {
-      const next = new PermissionsBitField(role.permissions).remove(PermissionFlagsBits.Speak);
-      await role.setPermissions(next, 'Pomodoro: focus (Speak OFF)').catch(()=>{});
-    }
-  }
-
-  // استثناء دائم لقنوات "talk room": تعطي Speak لرول Member
-  async function ensureTalkRoomsOverride(guild) {
-    const channels = guild.channels.cache.size ? guild.channels.cache : await guild.channels.fetch();
-    for (const ch of channels.values()) {
-      if (ch.type === ChannelType.GuildVoice && ch.name.toLowerCase() === 'talk room') {
-        await ch.permissionOverwrites.edit(MEMBER_ROLE_ID, { Speak: true }).catch(()=>{});
-      }
-    }
-  }
-
-  // إرسال تنبيه (مع منشن رول التنبيه)
+  // send embed to notify channel
   async function sendEmbed(guild, type, t) {
     const ch = guild.channels.cache.get(NOTIFY_CHANNEL_ID) || await guild.channels.fetch(NOTIFY_CHANNEL_ID).catch(() => null);
     if (!ch) return;
@@ -135,7 +93,7 @@ module.exports = (client, { blueColor }) => {
     }).catch(()=>{});
   }
 
-  // تنظيف التنبيهات قبل نهاية البريك
+  // cleanup notify channel before break ends
   async function cleanupAlertsNow(guild) {
     const ch = guild.channels.cache.get(NOTIFY_CHANNEL_ID) || await guild.channels.fetch(NOTIFY_CHANNEL_ID).catch(() => null);
     if (!ch || !ch.isTextBased()) return;
@@ -159,72 +117,38 @@ module.exports = (client, { blueColor }) => {
     } catch {}
   }
 
-  // ----- loop -----
+  // loop
   const fired = new Set(); // `${dateKey}-${H}-${m}-${event}`
 
   async function tick(guild) {
     const t = nowParts();
-    const phase = phaseOf(t.m);
 
-    // اضبط صلاحية Speak على رول Member حسب المرحلة (دائمًا)
-    await setMemberSpeak(guild, phase === 'break');
-
-    // أحداث محكومة بالدقيقة
     const ev = eventAtMinute(t.m);
     if (ev) {
       const key = `${t.dateKey}-${t.H}-${t.m}-${ev}`;
       if (!fired.has(key)) {
         fired.add(key);
 
-        // تحكّم فوري بالرول عند نقاط التحوّل
-        if (ev === 'break-start') {
-          // بداية البريك: اسمح بالتحدث فوراً
-          await setMemberSpeak(guild, true);
-        } else if (ev === 'focus-start') {
-          // بداية التركيز: امنع التحدث فوراً
-          await setMemberSpeak(guild, false);
-        } else if (ev === 'break-1-left') {
-          // قبل نهاية البريك بدقيقة: نظّف التنبيهات أولاً
+        if (ev === 'break-1-left') {
           await cleanupAlertsNow(guild);
         }
 
-        // أرسل التنبيه (مع منشن الرول)
         await sendEmbed(guild, ev, t);
       }
     }
 
-    // ثبّت Override لقنوات talk room كل 10 دقائق تقريبًا
-    if (t.m % 10 === 0 && t.s < 10) {
-      await ensureTalkRoomsOverride(guild);
-    }
-
-    // تنظيف مفاتيح يومي
+    // daily reset of dedupe keys
     if (t.H === 0 && t.m === 1 && t.s < 5) {
       fired.clear();
     }
   }
 
-  // ----- bootstrap -----
+  // bootstrap
   const run = async () => {
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
     if (!guild) return;
 
-    const me = await guild.members.fetch(client.user.id);
-    if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
-      console.warn('[pomodoro] Missing ManageRoles (cannot toggle Speak on Member role)');
-    }
-    if (!me.permissions.has(PermissionFlagsBits.ManageChannels)) {
-      console.warn('[pomodoro] Missing ManageChannels (talk room override may fail)');
-    }
-    if (!me.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      console.warn('[pomodoro] Missing ManageMessages (cleanup may fail)');
-    }
-
-    // أساسيات
-    await ensureBaselineEveryone(guild);
-    await ensureTalkRoomsOverride(guild);
-
-    // طبّق الحالة فورًا ثم ابدأ التكرار
+    // start ticking (no role/permission editing anywhere)
     await tick(guild);
     setInterval(() => tick(guild).catch(()=>{}), 10_000);
   };
