@@ -59,6 +59,7 @@ module.exports = (client) => {
         await new Promise(r=>setTimeout(r,650));
         if (msgs.size < 100) break;
       }
+      await ch.send('🧹 تم حذف التنبيهات السابقة').catch(()=>{});
     } catch {}
   }
 
@@ -79,6 +80,7 @@ module.exports = (client) => {
         { name: 'السويتش القادم', value: `**${nextLbl}**`, inline: true },
       )
       .setTimestamp(new Date());
+
     await ch.send({
       content: `<@&${ALERT_ROLE_ID}>`,
       allowedMentions: { roles: [ALERT_ROLE_ID] },
