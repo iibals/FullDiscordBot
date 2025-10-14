@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 
-module.exports = (client, { blueColor }) => {
+module.exports = (client) => {
   const GUILD_ID = '1399596680822915124';
   const NOTIFY_CHANNEL_ID = '1399596681271574659';
   const ALERT_ROLE_ID = '1399668268083449926';
@@ -41,16 +41,37 @@ module.exports = (client, { blueColor }) => {
     return fmtHM.format(tzNow);
   }
 
+  async function cleanupChannelMessages(guild) {
+    const ch = guild.channels.cache.get(NOTIFY_CHANNEL_ID) || await guild.channels.fetch(NOTIFY_CHANNEL_ID).catch(() => null);
+    if (!ch || !ch.isTextBased()) return;
+    try {
+      let loops = 0;
+      while (loops < 10) {
+        const msgs = await ch.messages.fetch({ limit: 100 }).catch(()=>null);
+        if (!msgs || msgs.size === 0) break;
+        const deletable = msgs.filter(m =>
+          !m.pinned &&
+          (Date.now() - m.createdTimestamp) < 14*24*60*60*1000
+        );
+        if (deletable.size === 0) break;
+        await ch.bulkDelete(deletable, true).catch(()=>{});
+        loops++;
+        await new Promise(r=>setTimeout(r,650));
+        if (msgs.size < 100) break;
+      }
+    } catch {}
+  }
+
   async function sendEmbed(guild, type, t) {
     const ch = guild.channels.cache.get(NOTIFY_CHANNEL_ID) || await guild.channels.fetch(NOTIFY_CHANNEL_ID).catch(() => null);
     if (!ch) return;
     const phase = phaseOf(t.m);
     const nextLbl = nextSwitchLabel(t.H, t.m);
     let title = '', desc = '';
-    if (type === 'break-start')   { title = '☕️ بدأ البريك (5 دقائق)';           desc = 'خذ نفسًا، موية، حركة خفيفة.'; }
-    if (type === 'focus-start')   { title = '🎯 بدأ وقت التركيز (25 دقيقة)';      desc = 'هدوء في غرف الدراسة. `talk room` مفتوح دائماً.'; }
+    if (type === 'break-start') { title = '☕️ بدأ البريك (5 دقائق)'; desc = 'خذ نفسًا، موية، حركة خفيفة.'; }
+    if (type === 'focus-start') { title = '🎯 بدأ وقت التركيز (25 دقيقة)'; desc = 'هدوء في غرف الدراسة. `talk room` مفتوح دائماً.'; }
     const embed = new EmbedBuilder()
-      .setColor(blueColor)
+      .setColor(0x1f8b4c)
       .setTitle(title)
       .setDescription(desc)
       .addFields(
@@ -74,6 +95,9 @@ module.exports = (client, { blueColor }) => {
       const key = `${t.dateKey}-${t.H}-${t.m}-${ev}`;
       if (!fired.has(key)) {
         fired.add(key);
+        if (ev === 'focus-start') {
+          await cleanupChannelMessages(guild);
+        }
         await sendEmbed(guild, ev, t);
       }
     }
