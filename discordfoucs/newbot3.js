@@ -6,7 +6,7 @@ const {
   ChannelType, Collection
 } = require('discord.js');
 
-const TOKEN   = process.env.BOT_TOKEN1; 
+const TOKEN   = process.env.BOT_TOKEN4; 
 const GUILD_ID = '1399596680822915124';
 
 const TICK_MS      = 1000;  

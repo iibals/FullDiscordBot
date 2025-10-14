@@ -1,13 +1,12 @@
 module.exports = (client) => {
   const { EmbedBuilder, PermissionFlagsBits, Collection } = require('discord.js');
 
-  // منع تكرار ربط نفس اللِسنر
   if (client._clearListenerRegistered) return;
   client._clearListenerRegistered = true;
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const BIG_CLEAR_COOLDOWN_MS = 5000; // تهدئة للقناة عند $clear 100
-  if (!client._clearCooldown) client._clearCooldown = new Map(); // channelId -> timestamp
+  const BIG_CLEAR_COOLDOWN_MS = 5000; 
+  if (!client._clearCooldown) client._clearCooldown = new Map(); 
 
   client.on('messageCreate', async (message) => {
     try {
@@ -94,18 +93,15 @@ module.exports = (client) => {
       let remaining = toDelete;
       let deletedCount = 0;
 
-      // استبعد: رسالة الأمر، رسالة التقدم، الرسائل المثبتة
       const candidates = fetched.filter(msg =>
         msg.id !== message.id &&
         msg.id !== progressMsg.id &&
         !msg.pinned
       );
 
-      // 1) احذف الحديثة (<= 14 يوم) دفعة واحدة عبر bulkDelete
       if (remaining > 0) {
         const fresh = candidates.filter(m => (nowMs - m.createdTimestamp) < fourteenDaysMs);
         if (fresh.size > 0) {
-          // خذ حتى "remaining" من الحديثة
           const freshArray = [...fresh.values()].slice(0, remaining);
           if (freshArray.length > 0) {
             const coll = new Collection();
@@ -118,7 +114,6 @@ module.exports = (client) => {
         }
       }
 
-      // 2) احذف القديمة (> 14 يوم) فرديًا — لا نغيّر هذه الطريقة
       if (remaining > 0) {
         const oldies = candidates
           .filter(m => (nowMs - m.createdTimestamp) >= fourteenDaysMs)
@@ -130,16 +125,13 @@ module.exports = (client) => {
             remaining--;
           } catch {}
           if (remaining <= 0) break;
-          // تهدئة خفيفة لتفادي الريت ليمِت عند الحذف الفردي
           await sleep(100);
         }
       }
 
-      // احذف رسالة الأمر ورسالة التقدم
       try { await message.delete().catch(()=>{}); } catch {}
       try { await progressMsg.delete().catch(()=>{}); } catch {}
 
-      // رسالة الملخص النهائية (تبقى)
       const summary = new EmbedBuilder()
         .setTitle('Messages Cleaner')
         .setColor('#0009ff')

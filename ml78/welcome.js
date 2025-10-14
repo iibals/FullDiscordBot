@@ -1,28 +1,23 @@
-// welcome.js
 const { EmbedBuilder, PermissionsBitField} = require('discord.js');
 
 module.exports = (client, { blueColor }) => {
   const WELCOME_CHANNEL_ID = '700129628936732783';
   const AUTO_ROLE_ID       = '633234046599823361';
 
-  // helper: format date as pure numbers "YYYY-MM-DD HH:mm:ss"
   const pad = (n) => String(n).padStart(2, '0');
   const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
   client.on('guildMemberAdd', async (member) => {
-    // Resolve channel
     let channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
     if (!channel) {
       try { channel = await member.guild.channels.fetch(WELCOME_CHANNEL_ID); }
       catch { return; }
     }
 
-    // Try to auto-assign role
     let roleAssigned = false;
     try {
       const role = member.guild.roles.cache.get(AUTO_ROLE_ID) || await member.guild.roles.fetch(AUTO_ROLE_ID);
       if (role) {
-        // Bot must have Manage Roles + its highest role above the target role
         if (
           member.guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles) &&
           role.position < member.guild.members.me.roles.highest.position
@@ -32,33 +27,28 @@ module.exports = (client, { blueColor }) => {
         }
       }
     } catch (err) {
-      // ignore assignment errors; mention in footer
     }
 
-    // Fetch richer user flags
     let flags = [];
     try {
       const u = await member.user.fetch();
       flags = u.flags?.toArray?.() || [];
     } catch (_) {}
 
-    // Timestamps
     const createdAt = member.user.createdAt;
     const joinedAt  = member.joinedAt ?? new Date();
     const ageDays   = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 86400000));
 
-    // Roles (exclude @everyone)
     const roles = member.roles.cache
       .filter(r => r.id !== member.guild.id)
       .sort((a, b) => b.position - a.position);
     const rolesList = roles.size ? roles.map(r => `<@&${r.id}>`).slice(0, 20).join(' ') : '—';
 
     const embed = new EmbedBuilder()
-      .setColor(blueColor) // blue
+      .setColor(blueColor)
       .setTitle(`Welcome, ${member.user.username}! 🎉`)
       .setDescription(
         `${member} Welcome to **${member.guild.name}**!\n`
-        // `Please read the rules and enjoy your stay.`
       )
       .addFields(
         {

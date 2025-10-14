@@ -1,6 +1,3 @@
-// ./scripts/onboarding-private-rooms.js
-// discord.js v14 — إنشاء روم خاص لكل عضو جديد + اختيار الجنس والتخصص (عربي/إنجليزي) عبر Select Menus ثم تعيين الرتب.
-// إذا اختار "None of above | غير موجود ضمن القائمة" يتم منشن الأدمن ويتوقف الحذف.
 const {
   PermissionFlagsBits,
   ChannelType,
@@ -43,7 +40,7 @@ module.exports = (client) => {
     eng:             { en: 'Engineering',        ar: 'الهندسة' },
     medicine:        { en: 'Medicine',           ar: 'الطب' },
     managemtn:       { en: 'Management',         ar: 'الإدارة' },
-    'compote-since': { en: 'Computer Science',   ar: 'علوم الحاسب' },
+    'Computer Science': { en: 'Computer Science',   ar: 'علوم الحاسب' },
     busniss:         { en: 'Business',           ar: 'الأعمال' },
     accounting:      { en: 'Accounting',         ar: 'المحاسبة' },
     markting:        { en: 'Marketing',          ar: 'التسويق' },
@@ -79,7 +76,6 @@ module.exports = (client) => {
     },
   ];
 
-  // منع التكرار
   if (client._onboardingHandler) return;
   client._onboardingHandler = true;
 
@@ -100,7 +96,6 @@ module.exports = (client) => {
 
         await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
 
-      // الفئة
       let parent = member.guild.channels.cache.find(
         (c) => c.type === ChannelType.GuildCategory && c.name === 'Private Onboarding'
       );
@@ -123,7 +118,6 @@ module.exports = (client) => {
         });
       }
 
-      // اسم الروم = اسم المستخدم فقط
       const safe = (s) => s.toLowerCase().replace(/[^a-z0-9-]+/gi, '-').slice(0, 32) || 'member';
       const ch = await member.guild.channels.create({
         name: safe(member.user.username),
@@ -154,7 +148,6 @@ module.exports = (client) => {
         ],
       });
 
-      // سؤال الجنس
       const genderRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId(`onb:gender:${member.id}`)
@@ -242,7 +235,6 @@ module.exports = (client) => {
 
         await interaction.reply({ content: `تم تعيين تخصصك: **${choice}**.` }).catch(() => {});
 
-        // رسالة ترحيبية لطيفة ثم حذف القناة بعد 20 ثانية
         try {
           await interaction.channel.send({
             content: `حياك الله ${member} 🤝\nتم تعيين الجنس والتخصص بنجاح. نتمنى لك التوفيق! سيتم حذف الغرفة بعد 20 ثانية.`,

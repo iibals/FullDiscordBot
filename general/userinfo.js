@@ -1,4 +1,3 @@
-// info.js (embed-only, fixed)
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = (client, { blueColor }) => {

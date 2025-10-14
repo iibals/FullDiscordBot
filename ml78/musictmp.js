@@ -1,5 +1,3 @@
-// Delete MusicChannelText 
-
 module.exports = (client) => {
     const musicChannelId = '1296284789296336966';
     

@@ -1,16 +1,14 @@
-// The boys server 
 module.exports = (client) =>  { 
 const theboysServerid = '1405445871159607346';
     let hue = 0;
 
 setInterval(() => {
 
-  const guild = client.guilds.cache.get('1174014582784798740'); // ID السيرفر
+  const guild = client.guilds.cache.get('1174014582784798740');
   if(!guild) return;
   const role = guild.roles.cache.get(theboysServerid);
   if (!role) return;
 
-  // تحويل Hue إلى RGB
   const rgb = HSLToRGB(hue / 360, 1, 0.5);
   const color = RGBToHex(rgb.r, rgb.g, rgb.b);
 
@@ -18,8 +16,8 @@ setInterval(() => {
     console.log("Boys Colors Changed!");
   }).catch(console.error);
 
-  hue = (hue + 137) % 360; // زيادة hue بدرجة 137 لإحداث تغيير كبير في اللون
-}, 270000); // يتغير كل 15 ثانية
+  hue = (hue + 137) % 360; 
+}, 270000); 
 
 function HSLToRGB(h, s, l) {
   let r, g, b;

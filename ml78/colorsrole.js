@@ -9,7 +9,6 @@ setInterval(() => {
   const role = guild.roles.cache.get(colorId);
   if (!role) return;
 
-  // تحويل Hue إلى RGB
   const rgb = HSLToRGB(hue / 360, 1, 0.5);
   const color = RGBToHex(rgb.r, rgb.g, rgb.b);
 
@@ -17,9 +16,9 @@ setInterval(() => {
     console.log("Ml78 Colors Changed!");
   }).catch(console.error);
 
-  hue = (hue + 137) % 360; // زيادة hue بدرجة 137 لإحداث تغيير كبير في اللون
+  hue = (hue + 137) % 360;
 }, 270000
-); // يتغير كل 15 ثانية
+); 
 
 function HSLToRGB(h, s, l) {
   let r, g, b;
