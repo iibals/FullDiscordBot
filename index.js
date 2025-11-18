@@ -44,6 +44,7 @@ require('./boys/ai')(client);
 require('./discordfoucs/main')(client);
 require('./discordfoucs/timeralarm')(client, { blueColor });
 require('./discordfoucs/logs')(client);
+require('./discordfoucs/prison')(client);
 require('./discordfoucs/newmember')(client);
 // General Tasks 
 require("./general/clearmsgs")(client);

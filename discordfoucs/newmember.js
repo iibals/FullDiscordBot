@@ -14,18 +14,19 @@ module.exports = (client) => {
 
   const GENDER_ROLES = {
     male:   '1422605527862743040',
-    female: '1422605527862743040',
+    female: '1422605529267699864',
   };
 
   const SPEC_ROLES = {
     eng:             '1422634115588690098',
     medicine:        '1422634118109335703',
     managemtn:       '1422634120609136711',
-    'compote-since': '1422634122760814692',
+    'Computer Science': '1422634122760814692',
     busniss:         '1422634125008830598',
     accounting:      '1422634127567356024',
     markting:        '1422634129777885316',
     law:             '1422634132780875878',
+    Islamic:         '1440244208316452865',
     architecture:    '1422634135494594590',
     design:          '1422634138187464766',
     nursing:         '1422634140255391915',
@@ -45,6 +46,7 @@ module.exports = (client) => {
     accounting:      { en: 'Accounting',         ar: 'المحاسبة' },
     markting:        { en: 'Marketing',          ar: 'التسويق' },
     law:             { en: 'Law',                ar: 'القانون' },
+    Islamic:             { en: 'Islamic',                ar: 'شريعة' },
     architecture:    { en: 'Architecture',       ar: 'العمارة' },
     design:          { en: 'Design',             ar: 'التصميم' },
     nursing:         { en: 'Nursing',            ar: 'التمريض' },
@@ -158,7 +160,7 @@ module.exports = (client) => {
       );
 
       await ch.send({
-        content: `${member} انت رجل ولا انثى ؟`,
+        content: `${member} انت رجل ولا انثى ؟ **الاختيار الخاطئ يعرضك للمحاسبة**`,
         components: [genderRow],
       });
     } catch {}
@@ -216,11 +218,24 @@ module.exports = (client) => {
       if (kind === 'spec') {
         const choice = interaction.values?.[0];
         await clearComponents();
-
+        
         if (choice === 'none') {
-          return interaction.reply({
+          // بلغ المستخدم
+          await interaction.reply({
             content: `ما لقينا تخصصك في القائمة. ${interaction.user} تواصل مع <@${ADMIN_ID}> لإضافته.`,
           }).catch(() => {});
+
+          // رسالة ترحيب
+          await interaction.channel.send({
+            content: `حياك الله ${member} 🤝\nتم تسجيل الجنس بنجاح، وبالنسبة للتخصص تواصل مع الإدارة لإضافته.\nسيتم حذف الغرفة بعد 20 ثانية.`,
+          }).catch(() => {});
+
+          // حذف الغرفة بعد 20 ثانية
+          setTimeout(() => {
+            interaction.channel?.delete('Onboarding - no spec').catch(() => {});
+          }, 20000);
+
+          return;
         }
 
         const roleId = SPEC_ROLES[choice];

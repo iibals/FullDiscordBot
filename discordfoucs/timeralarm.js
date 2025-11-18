@@ -43,7 +43,7 @@ module.exports = (client) => {
 
   async function cleanupChannelMessages(guild) {
     const ch = guild.channels.cache.get(NOTIFY_CHANNEL_ID) || await guild.channels.fetch(NOTIFY_CHANNEL_ID).catch(() => null);
-    if (!ch || !ch.isTextBased()) return;
+    if (!ch || !ch.isTextBased()) return null;
     try {
       let loops = 0;
       while (loops < 10) {
@@ -59,8 +59,10 @@ module.exports = (client) => {
         await new Promise(r=>setTimeout(r,650));
         if (msgs.size < 100) break;
       }
+      // نرسل رسالة الحذف هنا، وبعدها مباشرةً (في tick) بنرسل تنبيه التركيز
       await ch.send('🧹 تم حذف التنبيهات السابقة').catch(()=>{});
-    } catch {}
+      return ch;
+    } catch { return null; }
   }
 
   async function sendEmbed(guild, type, t) {
@@ -71,6 +73,7 @@ module.exports = (client) => {
     let title = '', desc = '';
     if (type === 'break-start') { title = '☕️ بدأ البريك (5 دقائق)'; desc = 'خذ نفسًا، موية، حركة خفيفة.'; }
     if (type === 'focus-start') { title = '🎯 بدأ وقت التركيز (25 دقيقة)'; desc = 'هدوء في غرف الدراسة. `talk room` مفتوح دائماً.'; }
+
     const embed = new EmbedBuilder()
       .setColor(0x1f8b4c)
       .setTitle(title)
@@ -98,9 +101,11 @@ module.exports = (client) => {
       if (!fired.has(key)) {
         fired.add(key);
         if (ev === 'focus-start') {
-          await cleanupChannelMessages(guild);
+          await cleanupChannelMessages(guild);   // 1) حذف
+          await sendEmbed(guild, ev, t);         // 2) إرسال تنبيه التركيز بعد رسالة الحذف
+        } else {
+          await sendEmbed(guild, ev, t);         // البريك يرسل مباشرة
         }
-        await sendEmbed(guild, ev, t);
       }
     }
     if (t.H === 0 && t.m === 1 && t.s < 5) fired.clear();
