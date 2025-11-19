@@ -1,16 +1,19 @@
+const path = require('path');
 const {
   PermissionFlagsBits,
   ChannelType,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   PermissionsBitField,
+  EmbedBuilder,
 } = require('discord.js');
 
 module.exports = (client) => {
-  const GUILD_ID = '1399596680822915124';
-  const ADMIN_ID = '237171492452958218';
-  const MEMBER_ROLE_ID = '1399668268083449926';
+  const GUILD_ID        = '1399596680822915124';
+  const ADMIN_ID        = '237171492452958218';
+  const MEMBER_ROLE_ID  = '1399668268083449926';
 
+  const IMAGE_PATH = path.resolve(__dirname, 'assets', 'browse.png');
 
   const GENDER_ROLES = {
     male:   '1422605527862743040',
@@ -18,85 +21,77 @@ module.exports = (client) => {
   };
 
   const SPEC_ROLES = {
-    eng:             '1422634115588690098',
-    medicine:        '1422634118109335703',
-    managemtn:       '1422634120609136711',
-    'Computer Science': '1422634122760814692',
-    busniss:         '1422634125008830598',
-    accounting:      '1422634127567356024',
-    markting:        '1422634129777885316',
-    law:             '1422634132780875878',
-    Islamic:         '1440244208316452865',
-    architecture:    '1422634135494594590',
-    design:          '1422634138187464766',
-    nursing:         '1422634140255391915',
-    pharamcy:        '1422634142281236510',
-    physics:         '1422634144160288889',
-    chemitry:        '1422634146957758617',
-    math:            '1422634148895526934',
-    languages:       '1422634151374356490',
+    eng:               '1422634115588690098',
+    medicine:          '1422634118109335703',
+    managemtn:         '1422634120609136711',
+    'Computer Science':'1422634122760814692',
+    busniss:           '1422634125008830598',
+    accounting:        '1422634127567356024',
+    markting:          '1422634129777885316',
+    law:               '1422634132780875878',
+    Islamic:           '1440244208316452865',
+    architecture:      '1422634135494594590',
+    design:            '1422634138187464766',
+    nursing:           '1422634140255391915',
+    pharamcy:          '1422634142281236510',
+    physics:           '1422634144160288889',
+    chemitry:          '1422634146957758617',
+    math:              '1422634148895526934',
+    languages:         '1422634151374356490',
   };
 
   const SPEC_META = {
-    eng:             { en: 'Engineering',        ar: 'الهندسة' },
-    medicine:        { en: 'Medicine',           ar: 'الطب' },
-    managemtn:       { en: 'Management',         ar: 'الإدارة' },
-    'Computer Science': { en: 'Computer Science',   ar: 'علوم الحاسب' },
-    busniss:         { en: 'Business',           ar: 'الأعمال' },
-    accounting:      { en: 'Accounting',         ar: 'المحاسبة' },
-    markting:        { en: 'Marketing',          ar: 'التسويق' },
-    law:             { en: 'Law',                ar: 'القانون' },
-    Islamic:             { en: 'Islamic',                ar: 'شريعة' },
-    architecture:    { en: 'Architecture',       ar: 'العمارة' },
-    design:          { en: 'Design',             ar: 'التصميم' },
-    nursing:         { en: 'Nursing',            ar: 'التمريض' },
-    pharamcy:        { en: 'Pharmacy',           ar: 'الصيدلة' },
-    physics:         { en: 'Physics',            ar: 'الفيزياء' },
-    chemitry:        { en: 'Chemistry',          ar: 'الكيمياء' },
-    math:            { en: 'Mathematics',        ar: 'الرياضيات' },
-    languages:       { en: 'Languages',          ar: 'اللغات' },
+    eng:                 { en: 'Engineering',       ar: 'الهندسة' },
+    medicine:            { en: 'Medicine',          ar: 'الطب' },
+    managemtn:           { en: 'Management',        ar: 'الإدارة' },
+    'Computer Science':  { en: 'Computer Science',  ar: 'علوم الحاسب' },
+    busniss:             { en: 'Business',          ar: 'الأعمال' },
+    accounting:          { en: 'Accounting',        ar: 'المحاسبة' },
+    markting:            { en: 'Marketing',         ar: 'التسويق' },
+    law:                 { en: 'Law',               ar: 'القانون' },
+    Islamic:             { en: 'Islamic',           ar: 'شريعة' },
+    architecture:        { en: 'Architecture',      ar: 'العمارة' },
+    design:              { en: 'Design',            ar: 'التصميم' },
+    nursing:             { en: 'Nursing',           ar: 'التمريض' },
+    pharamcy:            { en: 'Pharmacy',          ar: 'الصيدلة' },
+    physics:             { en: 'Physics',           ar: 'الفيزياء' },
+    chemitry:            { en: 'Chemistry',         ar: 'الكيمياء' },
+    math:                { en: 'Mathematics',       ar: 'الرياضيات' },
+    languages:           { en: 'Languages',         ar: 'اللغات' },
   };
 
   const genderOptions = [
-    { label: 'Male | ذكر', value: 'male', description: 'اختر: ذكر' },
+    { label: 'Male | ذكر',   value: 'male',   description: 'اختر: ذكر'   },
     { label: 'Female | أنثى', value: 'female', description: 'اختر: أنثى' },
   ];
 
   const specOptions = [
     ...Object.keys(SPEC_ROLES).map((key) => {
       const meta = SPEC_META[key] || { en: key, ar: key };
-      return {
-        label: `${meta.en} | ${meta.ar}`,
-        value: key,
-        description: `تخصص: ${meta.ar}`,
-      };
+      return { label: `${meta.en} | ${meta.ar}`, value: key, description: `تخصص: ${meta.ar}` };
     }),
-    {
-      label: 'None of above | غير موجود ضمن القائمة',
-      value: 'none',
-      description: 'تواصل لإضافة تخصصك',
-    },
+    { label: 'None of above | غير موجود ضمن القائمة', value: 'none', description: 'تواصل لإضافة تخصصك' },
   ];
 
   if (client._onboardingHandler) return;
   client._onboardingHandler = true;
 
   client.on('guildMemberAdd', async (member) => {
-    
     try {
       if (member.guild.id !== GUILD_ID) return;
 
       const me = member.guild.members.me;
-      if (
-        !me.permissions.has([
-          PermissionsBitField.Flags.ManageChannels,
-          PermissionsBitField.Flags.ManageRoles,
-          PermissionsBitField.Flags.SendMessages,
-          PermissionsBitField.Flags.ViewChannel,
-        ])
-      ) return;
+      if (!me.permissions.has([
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageRoles,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.EmbedLinks,
+        PermissionsBitField.Flags.AttachFiles,
+      ])) return;
 
-        await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+      await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
 
       let parent = member.guild.channels.cache.find(
         (c) => c.type === ChannelType.GuildCategory && c.name === 'Private Onboarding'
@@ -114,6 +109,8 @@ module.exports = (client) => {
                 PermissionFlagsBits.ManageChannels,
                 PermissionFlagsBits.SendMessages,
                 PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
               ],
             },
           ],
@@ -121,10 +118,10 @@ module.exports = (client) => {
       }
 
       const safe = (s) => s.toLowerCase().replace(/[^a-z0-9-]+/gi, '-').slice(0, 32) || 'member';
+
       const ch = await member.guild.channels.create({
         name: safe(member.user.username),
         type: ChannelType.GuildText,
-        parent: parent.id,
         permissionOverwrites: [
           { id: member.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
           {
@@ -145,23 +142,48 @@ module.exports = (client) => {
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.ManageChannels,
               PermissionFlagsBits.EmbedLinks,
+              PermissionFlagsBits.AttachFiles,
             ],
           },
         ],
+        reason: 'Private onboarding room',
       });
+
+      await ch.setParent(parent.id, { lockPermissions: false }).catch(() => {});
+      try { await ch.setPosition(0); } catch {}
+
+      try {
+        const imgEmbed = new EmbedBuilder()
+          .setColor(0x1f8b4c)
+          .setTitle('رتّب القنوات قبل البداية')
+          .setDescription([
+            'لو القنوات كثيرة وما تخصّ تخصصك، تقدر تُخفيها وتظهر بس قنوات تخصصك.',
+            'من القائمة الجانبية افتح **Browse Channels** وسو إظهار/إخفاء اللي يناسبك.',
+            'اختياري وتقدر تعدّل لاحقًا.'
+          ].join('\n'))
+          .setImage('attachment://browse.png');
+
+        await ch.send({
+          content: `${member}`,
+          embeds: [imgEmbed],
+          files: [{ attachment: IMAGE_PATH, name: 'browse.png' }],
+          allowedMentions: { users: [member.id] },
+        });
+      } catch {}
 
       const genderRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId(`onb:gender:${member.id}`)
-          .setPlaceholder('انت رجل ولا انثى ؟')
+          .setPlaceholder('انت رجل ولا أنثى؟')
           .setMinValues(1)
           .setMaxValues(1)
           .addOptions(genderOptions)
       );
 
       await ch.send({
-        content: `${member} انت رجل ولا انثى ؟ **الاختيار الخاطئ يعرضك للمحاسبة**`,
+        content: `${member} انت رجل ولا أنثى؟ **الاختيار الخاطئ يعرضك للمحاسبة**`,
         components: [genderRow],
+        allowedMentions: { users: [member.id] },
       });
     } catch {}
   });
@@ -203,7 +225,7 @@ module.exports = (client) => {
         const specRow = new ActionRowBuilder().addComponents(
           new StringSelectMenuBuilder()
             .setCustomId(`onb:spec:${member.id}`)
-            .setPlaceholder('وش التخصص حقك ؟ (Arabic/English)')
+            .setPlaceholder('وش التخصص حقك؟ (Arabic/English)')
             .setMinValues(1)
             .setMaxValues(1)
             .addOptions(specOptions)
@@ -212,29 +234,22 @@ module.exports = (client) => {
         await interaction.channel.send({
           content: `${member} اختر تخصصك من القائمة:`,
           components: [specRow],
+          allowedMentions: { users: [member.id] },
         });
       }
 
       if (kind === 'spec') {
         const choice = interaction.values?.[0];
         await clearComponents();
-        
+
         if (choice === 'none') {
-          // بلغ المستخدم
           await interaction.reply({
-            content: `ما لقينا تخصصك في القائمة. ${interaction.user} تواصل مع <@${ADMIN_ID}> لإضافته.`,
+            content: `ما لقينا تخصصك. ${interaction.user} تواصل مع <@${ADMIN_ID}> لإضافته.`,
           }).catch(() => {});
-
-          // رسالة ترحيب
           await interaction.channel.send({
-            content: `حياك الله ${member} 🤝\nتم تسجيل الجنس بنجاح، وبالنسبة للتخصص تواصل مع الإدارة لإضافته.\nسيتم حذف الغرفة بعد 20 ثانية.`,
+            content: `حياك الله ${member} 🤝\nتم تسجيل الجنس بنجاح. بالنسبة للتخصص، تواصل مع الإدارة لإضافته.\nسيتم حذف الغرفة بعد 20 ثانية.`,
           }).catch(() => {});
-
-          // حذف الغرفة بعد 20 ثانية
-          setTimeout(() => {
-            interaction.channel?.delete('Onboarding - no spec').catch(() => {});
-          }, 20000);
-
+          setTimeout(() => { interaction.channel?.delete('Onboarding - no spec').catch(() => {}); }, 20000);
           return;
         }
 
@@ -242,23 +257,15 @@ module.exports = (client) => {
         if (roleId) {
           const allSpecIds = Object.values(SPEC_ROLES);
           const hasAny = member.roles.cache.filter((r) => allSpecIds.includes(r.id));
-          if (hasAny.size) {
-            await member.roles.remove(hasAny).catch(() => {});
-          }
+          if (hasAny.size) await member.roles.remove(hasAny).catch(() => {});
           await member.roles.add(roleId).catch(() => {});
         }
 
         await interaction.reply({ content: `تم تعيين تخصصك: **${choice}**.` }).catch(() => {});
-
-        try {
-          await interaction.channel.send({
-            content: `حياك الله ${member} 🤝\nتم تعيين الجنس والتخصص بنجاح. نتمنى لك التوفيق! سيتم حذف الغرفة بعد 20 ثانية.`,
-          });
-        } catch {}
-
-        setTimeout(() => {
-          interaction.channel?.delete('Onboarding completed').catch(() => {});
-        }, 20000);
+        await interaction.channel.send({
+          content: `حياك الله ${member} 🤝\nتم تعيين الجنس والتخصص بنجاح. بالتوفيق!\nسيتم حذف الغرفة بعد 20 ثانية.`,
+        }).catch(() => {});
+        setTimeout(() => { interaction.channel?.delete('Onboarding completed').catch(() => {}); }, 20000);
       }
     } catch {}
   });
