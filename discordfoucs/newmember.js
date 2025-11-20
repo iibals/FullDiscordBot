@@ -128,10 +128,15 @@ module.exports = (client) => {
             id: member.id,
             allow: [
               PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.SendMessages,
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.EmbedLinks,
-              PermissionFlagsBits.AttachFiles,
+            ],
+            deny: [
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.CreatePublicThreads,
+              PermissionFlagsBits.CreatePrivateThreads,
+              PermissionFlagsBits.SendMessagesInThreads,
+              PermissionFlagsBits.AddReactions,
             ],
           },
           {
@@ -174,14 +179,14 @@ module.exports = (client) => {
       const genderRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId(`onb:gender:${member.id}`)
-          .setPlaceholder('انت رجل ولا أنثى؟')
+          .setPlaceholder('انت رجل ولا أنثى؟') // رجّعناه زي قبل
           .setMinValues(1)
           .setMaxValues(1)
           .addOptions(genderOptions)
       );
 
       await ch.send({
-        content: `${member} انت رجل ولا أنثى؟ **الاختيار الخاطئ يعرضك للمحاسبة**`,
+        content: `${member} انت ذكر ولا أنثى؟ **لا تكتب** — اختر من الخيارات بالأسفل.`,
         components: [genderRow],
         allowedMentions: { users: [member.id] },
       });
@@ -228,11 +233,17 @@ module.exports = (client) => {
             .setPlaceholder('وش التخصص حقك؟ (Arabic/English)')
             .setMinValues(1)
             .setMaxValues(1)
-            .addOptions(specOptions)
+            .addOptions(
+              ...Object.keys(SPEC_ROLES).map((key) => {
+                const meta = SPEC_META[key] || { en: key, ar: key };
+                return { label: `${meta.en} | ${meta.ar}`, value: key, description: `تخصص: ${meta.ar}` };
+              }),
+              { label: 'None of above | غير موجود ضمن القائمة', value: 'none', description: 'تواصل لإضافة تخصصك' },
+            )
         );
 
         await interaction.channel.send({
-          content: `${member} اختر تخصصك من القائمة:`,
+          content: `${member} اختر تخصصك من القائمة التالية.`,
           components: [specRow],
           allowedMentions: { users: [member.id] },
         });
